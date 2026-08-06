@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-FOOTBALL 2027 // Championship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b12;
+  --bg-2:#0d121c;
+  --panel: rgba(20,28,44,0.55);
+  --panel-solid:#111826;
+  --border: rgba(0,229,255,0.18);
+  --cyan:#00e5ff;
+  --cyan-dim: rgba(0,229,255,0.45);
+  --gold:#ffb92e;
+  --gold-dim: rgba(255,185,46,0.4);
+  --text:#e9f2f7;
+  --text-dim:#7d8aa0;
+  --danger:#ff4463;
+  --success:#22e2a0;
+  --radius: 14px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{background:var(--bg); color:var(--text); font-family:'Tajawal',sans-serif; min-height:100vh;}
+body{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(0,229,255,0.09), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(255,185,46,0.07), transparent 35%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.dispf{font-family:'Rajdhani',sans-serif; letter-spacing:0.5px;}
+::selection{ background: var(--cyan); color:#001217;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+input,select,textarea{font-family:'Tajawal',sans-serif;}
+
+/* ---------- Layout shells ---------- */
+#app{max-width:1280px; margin:0 auto; padding:0 20px 80px;}
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter: blur(16px) saturate(140%);
+  background: rgba(8,11,18,0.72);
+  border-bottom:1px solid var(--border);
+}
+.topbar-inner{max-width:1280px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+.logo{display:flex; align-items:center; gap:10px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px;}
+.logo .mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--cyan),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  color:#04070b; font-weight:800; font-size:15px;
+  box-shadow:0 0 22px rgba(0,229,255,0.45);
+}
+.logo .sub{font-size:11px; color:var(--text-dim); font-weight:500; letter-spacing:2px;}
+.tabs{display:flex; gap:6px; margin-inline-start:auto; flex-wrap:wrap;}
+.tab-btn{
+  padding:9px 16px; border-radius:999px; border:1px solid transparent;
+  background:transparent; color:var(--text-dim); font-size:14px; font-weight:600;
+  transition:all .2s;
+}
+.tab-btn:hover{color:var(--text); border-color:var(--border);}
+.tab-btn.active{color:#04141a; background:linear-gradient(135deg,var(--cyan),#5cf2ff); box-shadow:0 0 18px rgba(0,229,255,0.35);}
+.sound-toggle{
+  width:38px;height:38px;border-radius:50%; border:1px solid var(--border); background:var(--panel);
+  display:flex;align-items:center;justify-content:center; font-size:16px; color:var(--text-dim);
+}
+.sound-toggle.on{color:var(--gold); border-color:var(--gold-dim); box-shadow:0 0 14px rgba(255,185,46,0.3);}
+
+/* ---------- Glass panel ---------- */
+.glass{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+.section-title{
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:26px; letter-spacing:0.5px;
+  display:flex; align-items:center; gap:10px; margin:36px 0 16px;
+}
+.section-title .bar{width:5px;height:22px;border-radius:3px;background:linear-gradient(180deg,var(--cyan),var(--gold));}
+.eyebrow{font-size:12px; letter-spacing:3px; color:var(--cyan); font-weight:700; text-transform:uppercase; font-family:'Rajdhani',sans-serif;}
+
+/* ---------- Hero ---------- */
+.hero{
+  margin-top:26px; padding:38px 30px; position:relative; overflow:hidden;
+}
+.hero::before{
+  content:""; position:absolute; inset:0;
+  background: repeating-linear-gradient(90deg, rgba(0,229,255,0.045) 0 1px, transparent 1px 46px);
+  pointer-events:none;
+}
+.hero h1{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:44px; line-height:1.05; margin:10px 0 8px;}
+.hero h1 span{color:var(--gold);}
+.hero p{color:var(--text-dim); font-size:15px; max-width:560px;}
+.hero-stats{display:flex; gap:28px; margin-top:22px; flex-wrap:wrap;}
+.hstat b{font-family:'JetBrains Mono',monospace; font-size:26px; color:var(--cyan); display:block;}
+.hstat span{font-size:12px; color:var(--text-dim);}
+
+/* podium */
+.podium{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:26px;}
+.podium-card{padding:18px; text-align:center; position:relative;}
+.podium-card .rank-badge{
+  width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px; font-family:'Rajdhani',sans-serif; font-weight:800; font-size:20px;
+}
+.podium-card.g1{order:2; border-color:var(--gold-dim); box-shadow:0 0 30px rgba(255,185,46,0.18);}
+.podium-card.g1 .rank-badge{background:linear-gradient(135deg,#ffd76a,var(--gold)); color:#241300;}
+.podium-card.g2{order:1; opacity:0.95;}
+.podium-card.g2 .rank-badge{background:linear-gradient(135deg,#d7dde6,#9aa5b5); color:#0c1018;}
+.podium-card.g3{order:3; opacity:0.85;}
+.podium-card.g3 .rank-badge{background:linear-gradient(135deg,#e2a06a,#a9673a); color:#1a0d02;}
+.podium-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 10px; display:flex;align-items:center;justify-content:center; font-weight:800; font-size:20px; font-family:'Rajdhani',sans-serif;}
+.podium-name{font-weight:700; font-size:15px;}
+.podium-pts{font-family:'JetBrains Mono',monospace; color:var(--cyan); font-size:13px; margin-top:4px;}
+@media(max-width:640px){.podium{grid-template-columns:1fr;} .podium-card{order:initial !important;}}
+
+/* grid helpers */
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.grid-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;}
+@media(max-width:800px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+/* feed */
+.feed-item{padding:13px 16px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:10px; align-items:flex-start;}
+.feed-item:last-child{border-bottom:none;}
+.feed-tag{font-size:10px; font-weight:800; letter-spacing:1px; padding:3px 8px; border-radius:6px; white-space:nowrap; font-family:'Rajdhani',sans-serif;}
+.feed-tag.ban{background:rgba(255,68,99,0.15); color:var(--danger);}
+.feed-tag.deduct{background:rgba(255,185,46,0.15); color:var(--gold);}
+.feed-tag.note{background:rgba(0,229,255,0.12); color:var(--cyan);}
+.feed-text{font-size:13.5px; color:var(--text-dim); line-height:1.5;}
+.feed-text b{color:var(--text);}
+
+/* standings table */
+.table-wrap{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:760px;}
+th{
+  text-align:center; padding:12px 8px; color:var(--text-dim); font-weight:700; font-size:11px;
+  letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border); font-family:'Rajdhani',sans-serif;
+}
+td{text-align:center; padding:11px 8px; border-bottom:1px solid rgba(255,255,255,0.04);}
+tr.row-champ{background:linear-gradient(90deg, rgba(255,185,46,0.1), transparent);}
+tr.row-hof2{background:linear-gradient(90deg, rgba(220,225,235,0.08), transparent);}
+tr.row-hof3{background:linear-gradient(90deg, rgba(226,160,106,0.07), transparent);}
+tr.row-playoff{background:linear-gradient(90deg, rgba(0,229,255,0.07), transparent);}
+tr.row-relegated{background:linear-gradient(90deg, rgba(255,68,99,0.08), transparent); opacity:0.75;}
+.namecell{display:flex; align-items:center; gap:9px; text-align:right; justify-content:flex-start;}
+.mini-avatar{width:28px;height:28px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; font-family:'Rajdhani',sans-serif;}
+.pts-cell{font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--cyan);}
+.status-pill{font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:5px; letter-spacing:0.5px; font-family:'Rajdhani',sans-serif;}
+.status-pill.champ{background:var(--gold); color:#241300;}
+.status-pill.hof{background:rgba(220,225,235,0.25); color:#fff;}
+.status-pill.playoff{background:rgba(0,229,255,0.2); color:var(--cyan);}
+.status-pill.relegated{background:var(--danger); color:#2a0007;}
+
+/* fixtures */
+.round-tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:14px;}
+.round-tabs::-webkit-scrollbar{height:5px;}
+.round-tabs::-webkit-scrollbar-thumb{background:var(--border); border-radius:10px;}
+.round-btn{
+  flex-shrink:0; padding:8px 14px; border-radius:9px; border:1px solid var(--border); background:var(--panel-solid);
+  color:var(--text-dim); font-size:12.5px; font-weight:700; font-family:'Rajdhani',sans-serif;
+}
+.round-btn.active{color:#04141a; background:var(--cyan); border-color:var(--cyan);}
+.round-btn.done::after{content:" ✓"; color:var(--success);}
+.matches-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+@media(max-width:700px){.matches-grid{grid-template-columns:1fr;}}
+.match-card{padding:14px 16px;}
+.match-teams{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.match-side{display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; min-width:0;}
+.match-side .mini-avatar{width:38px;height:38px;font-size:14px;}
+.match-side .pname{font-size:12px; font-weight:700; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.match-score{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:22px; color:var(--text); display:flex; gap:6px; align-items:center;}
+.match-score .dash{color:var(--text-dim); font-size:16px;}
+.match-poss{font-size:10.5px; color:var(--text-dim); margin-top:6px; text-align:center;}
+.match-input-row{display:flex; gap:6px; align-items:center; margin-top:10px; justify-content:center;}
+.match-input-row input{width:46px; text-align:center; background:var(--bg-2); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:5px 2px; font-family:'JetBrains Mono',monospace;}
+.small-btn{padding:6px 12px; border-radius:7px; border:1px solid var(--cyan-dim); background:rgba(0,229,255,0.1); color:var(--cyan); font-size:12px; font-weight:700;}
+.small-btn:hover{background:rgba(0,229,255,0.2);}
+.small-btn.danger{border-color:rgba(255,68,99,0.4); background:rgba(255,68,99,0.1); color:var(--danger);}
+.badge-playoff{font-size:9.5px; color:var(--gold); font-weight:800; letter-spacing:1px; margin-top:6px; text-align:center; font-family:'Rajdhani',sans-serif;}
+
+/* players grid */
+.players-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px;}
+.player-card{padding:18px 14px; text-align:center; cursor:pointer; transition:transform .15s, box-shadow .15s;}
+.player-card:hover{transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,229,255,0.12);}
+.player-avatar-lg{width:64px;height:64px;border-radius:50%; margin:0 auto 10px; display:flex;align-items:center;justify-content:center; font-weight:800; font-size:22px; font-family:'Rajdhani',sans-serif; overflow:hidden;}
+.player-avatar-lg img{width:100%;height:100%;object-fit:cover;}
+.player-card .pname{font-weight:700; font-size:14.5px;}
+.player-card .prank{font-size:11px; color:var(--text-dim); margin-top:3px;}
+.player-card .status-pill{margin-top:8px; display:inline-block;}
+
+/* modal */
+.modal-backdrop{position:fixed; inset:0; background:rgba(4,6,10,0.72); backdrop-filter:blur(6px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;}
+.modal{width:100%; max-width:720px; padding:26px; position:relative; margin-bottom:40px;}
+.modal-close{position:absolute; top:16px; left:16px; width:32px;height:32px;border-radius:50%; background:var(--panel-solid); border:1px solid var(--border); color:var(--text); font-size:16px;}
+.profile-head{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
+.profile-head .player-avatar-lg{width:78px;height:78px; font-size:26px;}
+.profile-stats-row{display:flex; gap:22px; margin-top:18px; flex-wrap:wrap;}
+.pstat b{display:block; font-family:'JetBrains Mono',monospace; font-size:20px; color:var(--cyan);}
+.pstat span{font-size:11px; color:var(--text-dim);}
+.hamas-wrap{display:flex; align-items:center; gap:14px; margin-top:18px;}
+.comment-box{margin-top:14px; padding:12px 14px; border-radius:10px; background:rgba(0,229,255,0.06); border:1px solid var(--border); font-size:13.5px; font-style:italic;}
+.pitch-svg{width:100%; max-width:280px; margin:14px auto 0; display:block;}
+
+/* h2h */
+.h2h-selects{display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin-bottom:22px;}
+.h2h-selects select{padding:10px 14px; border-radius:9px; background:var(--panel-solid); border:1px solid var(--border); color:var(--text); font-size:14px; min-width:180px;}
+.h2h-vs{font-family:'Rajdhani',sans-serif; font-weight:800; font-size:22px; color:var(--gold);}
+.h2h-bar-row{margin-bottom:14px;}
+.h2h-bar-label{display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:5px;}
+.h2h-bar-track{display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--bg-2);}
+.h2h-bar-a{background:linear-gradient(90deg,var(--cyan),#5cf2ff);}
+.h2h-bar-b{background:linear-gradient(90deg,var(--gold),#ffd76a);}
+
+/* admin */
+.login-box{max-width:360px; margin:60px auto; padding:28px; text-align:center;}
+.login-box input{width:100%; padding:11px 14px; border-radius:9px; background:var(--bg-2); border:1px solid var(--border); color:var(--text); margin:14px 0; text-align:center;}
+.admin-tabs{display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
+.admin-subtab{padding:8px 14px; border-radius:9px; border:1px solid var(--border); background:var(--panel-solid); color:var(--text-dim); font-size:13px; font-weight:700;}
+.admin-subtab.active{background:var(--gold); color:#241300; border-color:var(--gold);}
+.form-row{margin-bottom:14px;}
+.form-row label{display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:600;}
+.form-row input, .form-row select, .form-row textarea{
+  width:100%; padding:10px 12px; border-radius:9px; background:var(--bg-2); border:1px solid var(--border); color:var(--text); font-size:14px;
+}
+.form-row textarea{resize:vertical; min-height:60px;}
+.player-edit-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);}
+.player-edit-row input{flex:1; min-width:0;}
+.color-dot{width:22px;height:22px;border-radius:50%; border:2px solid rgba(255,255,255,0.2); flex-shrink:0; cursor:pointer;}
+.pad{padding:20px;}
+.footer-note{text-align:center; color:var(--text-dim); font-size:12px; margin-top:50px; padding-top:20px; border-top:1px solid var(--border);}
+.gauge-num{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px;}
+.empty-state{text-align:center; padding:40px 20px; color:var(--text-dim);}
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBOR2xpbDemVpDp6QGmAkz5htR6960-nFk",
+    authDomain: "efootball-2027.firebaseapp.com",
+    projectId: "efootball-2027",
+    storageBucket: "efootball-2027.firebasestorage.app",
+    messagingSenderId: "489770657704",
+    appId: "1:489770657704:web:6f6cc36c92578890bf1f9d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.__firestoreGet = async (key) => {
+    const snap = await getDoc(doc(db, 'efootball2027', key));
+    return snap.exists() ? snap.data().value : null;
+  };
+  window.__firestoreSet = async (key, val) => {
+    await setDoc(doc(db, 'efootball2027', key), { value: val });
+  };
+</script>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============================= DATA LAYER ============================= */
+const AVATAR_COLORS = ["#00e5ff","#ffb92e","#ff4463","#22e2a0","#a78bfa","#ff8fb1","#4dd0e1","#f9a825","#7c9eff","#ff7043","#66bb6a","#ec407a","#26c6da","#ffca28","#5c6bc0","#8d6e63"];
+const DEFAULT_NAMES = ["Zizou_King","Atlas_Lion","CasaGamer","RaJa_Legend","Wydad_Pro","N'Golo_X","Berkane10","Botola_Beast","DarkHorse_MA","Fnaire_FC","Marrakech_Wolf","Tanger_Titan","Fes_Falcon","Agadir_Ace","Rabat_Rocket","Oujda_Outlaw"];
+const ADMIN_PASSWORD = "efootball2027";
+
+let players = [];
+let matches = [];
+let sanctions = [];
+let settings = { sound:false };
+let isAdmin = false;
+let activeTab = "dashboard";
+let activeRound = 1;
+let activeAdminSub = "matches";
+let openProfileId = null;
+let h2hA = null, h2hB = null;
+
+function initials(name){ return name.slice(0,2).toUpperCase(); }
+
+function defaultPlayers(){
+  return DEFAULT_NAMES.map((n,i)=>({
+    id:i,
+    name:n,
+    color: AVATAR_COLORS[i],
+    photo:"",
+    formation:"4-3-3",
+    comment:"",
+    commentRound:0,
+    banned:false
+  }));
+}
+
+function generateFixtures(n){
+  let ids = Array.from({length:n}, (_,i)=>i);
+  let rounds = [];
+  for(let r=0;r<n-1;r++){
+    let roundMatches = [];
+    for(let i=0;i<n/2;i++){
+      let home = ids[i], away = ids[n-1-i];
+      if(r%2===1){ [home,away]=[away,home]; }
+      roundMatches.push({home,away});
+    }
+    rounds.push(roundMatches);
+    ids.splice(1,0, ids.pop());
+  }
+  return rounds;
+}
+
+function defaultMatches(){
+  const rounds = generateFixtures(16);
+  let out = [];
+  let mid = 0;
+  rounds.forEach((rm, ridx)=>{
+    rm.forEach(m=>{
+      out.push({
+        id: mid++,
+        round: ridx+1,
+        home: m.home,
+        away: m.away,
+        homeScore:null,
+        awayScore:null,
+        homePoss:null,
+        awayPoss:null,
+        played:false
+      });
+    });
+  });
+  return out;
+}
+
+async function storGet(key, defVal){
+  try{
+    const val = await window.__firestoreGet(key);
+    if(val === null){ await storSet(key, defVal); return defVal; }
+    return val;
+  }catch(e){
+    console.error("storage get failed", e);
+    return defVal;
+  }
+}
+async function storSet(key, val){
+  try{ await window.__firestoreSet(key, val); }catch(e){ console.error("storage set failed", e); }
+}
+
+async function loadAll(){
+  players = await storGet('ef2027_players', defaultPlayers());
+  matches = await storGet('ef2027_matches', defaultMatches());
+  sanctions = await storGet('ef2027_sanctions', []);
+  settings = await storGet('ef2027_settings', {sound:false});
+}
+
+/* ============================= LOGIC ============================= */
+function playedMatchesFor(pid){
+  return matches.filter(m=>m.played && (m.home===pid || m.away===pid));
+}
+
+function sanctionDeductionFor(pid){
+  return sanctions.filter(s=>s.playerId===pid && s.type==='deduct').reduce((a,s)=>a+(s.points||0),0);
+}
+
+function computeStats(pid){
+  const pm = playedMatchesFor(pid);
+  let pts=0, w=0,d=0,l=0, gf=0, ga=0, possSum=0;
+  pm.forEach(m=>{
+    const isHome = m.home===pid;
+    const gfor = isHome? m.homeScore : m.awayScore;
+    const gag = isHome? m.awayScore : m.homeScore;
+    const poss = isHome? m.homePoss : m.awayPoss;
+    gf+=gfor; ga+=gag; possSum += (poss||0);
+    if(gfor>gag){pts+=3; w++;} else if(gfor===gag){pts+=1; d++;} else {l++;}
+  });
+  pts -= sanctionDeductionFor(pid);
+  return {played:pm.length, w,d,l,gf,ga,gd:gf-ga, possSum, pts, avgPoss: pm.length? Math.round(possSum/pm.length):0};
+}
+
+function computeStandings(){
+  let table = players.map(p=>({...p, stats:computeStats(p.id)}));
+  table.sort((a,b)=>{
+    if(b.stats.pts!==a.stats.pts) return b.stats.pts-a.stats.pts;
+    if(b.stats.gd!==a.stats.gd) return b.stats.gd-a.stats.gd;
+    return b.stats.possSum-a.stats.possSum;
+  });
+  table.forEach((p,i)=>{ p.rank=i+1; });
+  return table;
+}
+
+function statusForRank(rank, total=16){
+  if(rank===1) return {key:'champ', label:'🏆 البطل'};
+  if(rank===2) return {key:'hof', label:'🥈 قاعة المجد'};
+  if(rank===3) return {key:'hof', label:'🥉 قاعة المجد'};
+  if(rank===13 || rank===14) return {key:'playoff', label:'⚔️ Playoff البقاء'};
+  if(rank===15 || rank===16) return {key:'relegated', label:'⛔ مقصى'};
+  return null;
+}
+
+function formLast5(pid){
+  const pm = playedMatchesFor(pid).slice().sort((a,b)=>a.round-b.round).slice(-5);
+  return pm.map(m=>{
+    const isHome=m.home===pid;
+    const gfor=isHome?m.homeScore:m.awayScore, gag=isHome?m.awayScore:m.homeScore;
+    if(gfor>gag) return 'W'; if(gfor===gag) return 'D'; return 'L';
+  });
+}
+
+function hamasScore(pid){
+  const form = formLast5(pid);
+  if(form.length===0) return 50;
+  let score = 0;
+  form.forEach(r=> score += r==='W'?20:(r==='D'?8:0));
+  // streak bonus
+  let streak=0;
+  for(let i=form.length-1;i>=0;i--){ if(form[i]==='W') streak++; else break; }
+  score += streak*6;
+  return Math.max(4, Math.min(100, score));
+}
+
+function currentRound(){
+  const rounds = matches.map(m=>m.round);
+  for(let r=1; r<=15; r++){
+    const rm = matches.filter(m=>m.round===r);
+    if(rm.some(m=>!m.played)) return r;
+  }
+  return 15;
+}
+
+function lastCompletedRound(){
+  for(let r=15;r>=1;r--){
+    const rm = matches.filter(m=>m.round===r);
+    if(rm.length && rm.every(m=>m.played)) return r;
+  }
+  return null;
+}
+
+function computeMVP(round){
+  if(!round) return null;
+  const rm = matches.filter(m=>m.round===round && m.played);
+  if(!rm.length) return null;
+  let best=null, bestScore=-1;
+  rm.forEach(m=>{
+    [['home','homeScore','homePoss'],['away','awayScore','awayPoss']].forEach(([side,scoreKey,possKey])=>{
+      const pid = m[side];
+      const contrib = (m[scoreKey]||0)*10 + (m[possKey]||0)/5;
+      if(contrib>bestScore){ bestScore=contrib; best=pid; }
+    });
+  });
+  return best;
+}
+
+function h2hRecord(a,b){
+  const rec = matches.filter(m=>m.played && ((m.home===a&&m.away===b)||(m.home===b&&m.away===a)));
+  let aw=0,bw=0,dr=0;
+  rec.forEach(m=>{
+    const aIsHome = m.home===a;
+    const ags = aIsHome? m.homeScore: m.awayScore;
+    const bgs = aIsHome? m.awayScore: m.homeScore;
+    if(ags>bgs) aw++; else if(bgs>ags) bw++; else dr++;
+  });
+  return {aw,bw,dr,total:rec.length};
+}
+
+/* ============================= AUDIO ============================= */
+let actx = null;
+function beep(freqStart, freqEnd, dur, type='sine'){
+  if(!settings.sound) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type=type;
+    o.frequency.setValueAtTime(freqStart, actx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,20), actx.currentTime+dur);
+    g.gain.setValueAtTime(0.08, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function goalSound(){ beep(300,900,0.5,'sawtooth'); setTimeout(()=>beep(500,1200,0.35,'triangle'),120); }
+function clickSound(){ beep(600,700,0.06,'square'); }
+
+/* ============================= RENDER HELPERS ============================= */
+function avatarHTML(p, size='mini-avatar'){
+  if(p.photo){
+    return `<div class="${size}" style="background:${p.color}22;"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${initials(p.name)}'"/></div>`;
+  }
+  return `<div class="${size}" style="background:${p.color}30; color:${p.color};">${initials(p.name)}</div>`;
+}
+
+function playerById(id){ return players.find(p=>p.id===id); }
+
+function statusPillHTML(status){
+  if(!status) return '';
+  return `<span class="status-pill ${status.key}">${status.label}</span>`;
+}
+
+/* ============================= RENDER: SHELL ============================= */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderTopbar()}
+    <div id="tabContent">${renderTabContent()}</div>
+    ${openProfileId!==null ? renderProfileModal(openProfileId) : ''}
+    <div class="footer-note dispf">E-FOOTBALL 2027 CHAMPIONSHIP · Botola Format · 16 Players · Single League</div>
+  `;
+}
+
+function renderTopbar(){
+  const tabs = [
+    ['dashboard','الرئيسية'],
+    ['standings','الترتيب'],
+    ['fixtures','الجولات'],
+    ['players','اللاعبين'],
+    ['h2h','مقارنة'],
+    ['admin','لوحة التحكم'],
+  ];
+  return `
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo dispf"><div class="mark">EF</div><div><div>E-FOOTBALL <span style="color:var(--gold)">2027</span></div><div class="sub">CHAMPIONSHIP</div></div></div>
+      <div class="tabs">
+        ${tabs.map(([k,l])=>`<button class="tab-btn ${activeTab===k?'active':''}" onclick="setTab('${k}')">${l}</button>`).join('')}
+      </div>
+      <button class="sound-toggle ${settings.sound?'on':''}" onclick="toggleSound()" title="الصوت">${settings.sound?'🔊':'🔈'}</button>
+    </div>
+  </div>`;
+}
+
+function renderTabContent(){
+  if(activeTab==='dashboard') return renderDashboard();
+  if(activeTab==='standings') return renderStandingsTab();
+  if(activeTab==='fixtures') return renderFixturesTab();
+  if(activeTab==='players') return renderPlayersTab();
+  if(activeTab==='h2h') return renderH2HTab();
+  if(activeTab==='admin') return renderAdminTab();
+  return '';
+}
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(){
+  const table = computeStandings();
+  const top3 = table.slice(0,3);
+  const cr = currentRound();
+  const lastR = lastCompletedRound();
+  const mvpId = computeMVP(lastR);
+  const mvp = mvpId!==null && mvpId!==undefined ? playerById(mvpId) : null;
+  const recentSanctions = sanctions.slice().reverse().slice(0,5);
+  const playedCount = matches.filter(m=>m.played).length;
+
+  return `
+  <div class="hero glass">
+    <div class="eyebrow">BOTOLA · SINGLE LEAGUE · 16 PLAYERS</div>
+    <h1 class="dispf">بطولة إي فوتبول <span>2027</span></h1>
+    <p>منافسة نارية بين 16 لاعب فـ فورمات الدوري الواحد. الترتيب كيتبدل لحظة بلحظة، والإقصاء والـ Playoff محتومين فـ الأسفل.</p>
+    <div class="hero-stats">
+      <div class="hstat"><b>${playedCount}/120</b><span>مباريات ملعوبة</span></div>
+      <div class="hstat"><b>${cr}</b><span>الجولة الحالية</span></div>
+      <div class="hstat"><b>${sanctions.length}</b><span>عقوبات صادرة</span></div>
+    </div>
+    <div class="podium">
+      ${top3.map((p,i)=>{
+        const g = i===0?'g1':(i===1?'g2':'g3');
+        const rank = i+1;
+        return `<div class="podium-card glass ${g}">
+          <div class="rank-badge dispf">${rank}</div>
+          ${avatarHTML(p,'podium-avatar').replace('podium-avatar','podium-avatar').replace('style="background','style="margin:0 auto 10px;background')}
+          <div class="podium-name">${p.name}</div>
+          <div class="podium-pts">${p.stats.pts} PTS · GD ${p.stats.gd>=0?'+':''}${p.stats.gd}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title dispf"><div class="bar"></div>MVP آخر جولة</div>
+      <div class="glass pad" style="text-align:center;">
+        ${mvp? `
+          ${avatarHTML(mvp,'player-avatar-lg').replace('style="background','style="margin:0 auto 10px;background')}
+          <div style="font-weight:700; font-size:17px;">${mvp.name}</div>
+          <div style="color:var(--text-dim); font-size:12px; margin-top:4px;">أفضل لاعب فـ الجولة ${lastR}</div>
+          <div class="status-pill champ" style="margin-top:10px;">⭐ Player of the Week</div>
+        ` : `<div class="empty-state">مازال ماكاينش جولة كاملة</div>`}
+      </div>
+    </div>
+    <div>
+      <div class="section-title dispf"><div class="bar"></div>الإعلانات والعقوبات</div>
+      <div class="glass" style="max-height:260px; overflow-y:auto;">
+        ${recentSanctions.length? recentSanctions.map(s=>{
+          const pl = playerById(s.playerId);
+          const tagClass = s.type==='ban'?'ban':(s.type==='deduct'?'deduct':'note');
+          const tagLabel = s.type==='ban'?'إيقاف':(s.type==='deduct'?'خصم نقط':'تنبيه');
+          return `<div class="feed-item">
+            <span class="feed-tag ${tagClass}">${tagLabel}</span>
+            <div class="feed-text"><b>${pl?pl.name:'?'}</b> — ${s.description}${s.type==='deduct'?` (−${s.points} نقط)`:''}</div>
+          </div>`;
+        }).join('') : `<div class="empty-state">مازال ماكاين حتى عقوبة</div>`}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/* ---------- Standings ---------- */
+function renderStandingsTab(){
+  const table = computeStandings();
+  return `
+  <div class="section-title dispf"><div class="bar"></div>الترتيب العام</div>
+  <div class="glass table-wrap pad">
+    <table>
+      <thead><tr>
+        <th>#</th><th style="text-align:right">اللاعب</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>له</th><th>عليه</th><th>+/-</th><th>استحواذ</th><th>نقط</th><th>الحالة</th>
+      </tr></thead>
+      <tbody>
+        ${table.map(p=>{
+          const st = statusForRank(p.rank);
+          let rowClass='';
+          if(p.rank===1) rowClass='row-champ'; else if(p.rank===2) rowClass='row-hof2'; else if(p.rank===3) rowClass='row-hof3';
+          else if(p.rank===13||p.rank===14) rowClass='row-playoff'; else if(p.rank>=15) rowClass='row-relegated';
+          return `<tr class="${rowClass}">
+            <td class="dispf" style="font-weight:700;">${p.rank}</td>
+            <td><div class="namecell">${avatarHTML(p)}<span style="font-weight:600;">${p.name}</span></div></td>
+            <td>${p.stats.played}</td><td>${p.stats.w}</td><td>${p.stats.d}</td><td>${p.stats.l}</td>
+            <td>${p.stats.gf}</td><td>${p.stats.ga}</td><td>${p.stats.gd>=0?'+':''}${p.stats.gd}</td>
+            <td>${p.stats.avgPoss}%</td>
+            <td class="pts-cell">${p.stats.pts}</td>
+            <td>${statusPillHTML(st)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:14px; font-size:12px; color:var(--text-dim); display:flex; gap:18px; flex-wrap:wrap;">
+    <span>🏆 المركز 1: البطل</span><span>🥈🥉 2-3: قاعة المجد</span><span>⚔️ 13-14: Playoff البقاء</span><span>⛔ 15-16: إقصاء مباشر</span>
+  </div>
+  `;
+}
+
+/* ---------- Fixtures ---------- */
+function renderFixturesTab(){
+  const rounds = Array.from({length:15},(_,i)=>i+1);
+  const rm = matches.filter(m=>m.round===activeRound);
+  const table = computeStandings();
+  const rankOf = {}; table.forEach(p=>rankOf[p.id]=p.rank);
+
+  return `
+  <div class="section-title dispf"><div class="bar"></div>الجولات والمباريات</div>
+  <div class="round-tabs">
+    ${rounds.map(r=>{
+      const done = matches.filter(m=>m.round===r).every(m=>m.played);
+      return `<button class="round-btn ${activeRound===r?'active':''} ${done?'done':''}" onclick="setRound(${r})">جولة ${r}</button>`;
+    }).join('')}
+  </div>
+  <div class="matches-grid">
+    ${rm.map(m=>{
+      const h = playerById(m.home), a = playerById(m.away);
+      const isPlayoffPair = (activeRound===15) && ((rankOf[m.home]===13&&rankOf[m.away]===14)||(rankOf[m.home]===14&&rankOf[m.away]===13));
+      return `<div class="match-card glass">
+        <div class="match-teams">
+          <div class="match-side">${avatarHTML(h,'mini-avatar')}<span class="pname">${h.name}</span></div>
+          <div class="match-score">
+            ${m.played? `<span>${m.homeScore}</span><span class="dash">–</span><span>${m.awayScore}</span>` : `<span class="dash" style="font-size:13px;">VS</span>`}
+          </div>
+          <div class="match-side">${avatarHTML(a,'mini-avatar')}<span class="pname">${a.name}</span></div>
+        </div>
+        ${m.played? `<div class="match-poss">استحواذ ${m.homePoss}% — ${m.awayPoss}%</div>` : ''}
+        ${isPlayoffPair? `<div class="badge-playoff">⚔️ SURVIVAL PLAYOFF MATCH</div>`: ''}
+        ${isAdmin? `
+          <div class="match-input-row">
+            <input type="number" min="0" id="hs_${m.id}" placeholder="${m.played?m.homeScore:'0'}">
+            <span class="dash">-</span>
+            <input type="number" min="0" id="as_${m.id}" placeholder="${m.played?m.awayScore:'0'}">
+          </div>
+          <div class="match-input-row">
+            <input type="number" min="0" max="100" id="hp_${m.id}" placeholder="${m.played?m.homePoss:'استح%'}">
+            <span class="dash">-</span>
+            <input type="number" min="0" max="100" id="ap_${m.id}" placeholder="${m.played?m.awayPoss:'استح%'}">
+          </div>
+          <div class="match-input-row"><button class="small-btn" onclick="submitMatch(${m.id})">${m.played?'تعديل':'حفظ النتيجة'}</button></div>
+        `:''}
+      </div>`;
+    }).join('')}
+  </div>
+  `;
+}
+
+/* ---------- Players ---------- */
+function renderPlayersTab(){
+  const table = computeStandings();
+  const rankOf = {}; table.forEach(p=>rankOf[p.id]=p.rank);
+  return `
+  <div class="section-title dispf"><div class="bar"></div>اللاعبين</div>
+  <div class="players-grid">
+    ${players.map(p=>{
+      const st = statusForRank(rankOf[p.id]);
+      return `<div class="player-card glass" onclick="openProfile(${p.id})">
+        ${avatarHTML(p,'player-avatar-lg')}
+        <div class="pname">${p.name}</div>
+        <div class="prank">مركز ${rankOf[p.id]||'-'} · ${computeStats(p.id).pts} نقط</div>
+        ${st? statusPillHTML(st):''}
+        ${p.banned? `<div class="status-pill relegated" style="margin-top:6px;">🚫 موقوف</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+  `;
+}
+
+function renderPitchSVG(formation){
+  const segs = (formation||'4-3-3').split('-').map(s=>parseInt(s)).filter(n=>!isNaN(n)&&n>0);
+  const lines = segs.length? segs : [4,3,3];
+  const W=260, H=400;
+  let dots = [];
+  // GK
+  dots.push({x:W/2, y:H-24});
+  const usableTop=40, usableBottom=H-70;
+  const step = (usableBottom-usableTop)/lines.length;
+  lines.forEach((count,li)=>{
+    const y = usableBottom - li*step;
+    for(let i=0;i<count;i++){
+      const x = (W/(count+1))*(i+1);
+      dots.push({x,y});
+    }
+  });
+  const dotCircles = dots.map((d,i)=>`<circle cx="${d.x}" cy="${d.y}" r="9" fill="${i===0?'#ffb92e':'#00e5ff'}" stroke="#04141a" stroke-width="2"/>`).join('');
+  return `<svg class="pitch-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="${W-8}" height="${H-8}" rx="10" fill="rgba(34,226,160,0.06)" stroke="rgba(255,255,255,0.15)"/>
+    <line x1="4" y1="${H/2}" x2="${W-4}" y2="${H/2}" stroke="rgba(255,255,255,0.15)"/>
+    <circle cx="${W/2}" cy="${H/2}" r="34" fill="none" stroke="rgba(255,255,255,0.15)"/>
+    <rect x="${W/2-55}" y="4" width="110" height="46" fill="none" stroke="rgba(255,255,255,0.15)"/>
+    <rect x="${W/2-55}" y="${H-50}" width="110" height="46" fill="none" stroke="rgba(255,255,255,0.15)"/>
+    ${dotCircles}
+  </svg>`;
+}
+
+function renderHamasGauge(pid){
+  const score = hamasScore(pid);
+  const r=30, circ=2*Math.PI*r;
+  const offset = circ - (score/100)*circ;
+  return `<svg width="80" height="80" viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="url(#hgrad${pid})" stroke-width="8" stroke-linecap="round"
+      stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 40 40)"/>
+    <defs><linearGradient id="hgrad${pid}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#ffb92e"/>
+    </linearGradient></defs>
+    <text x="40" y="45" text-anchor="middle" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#e9f2f7">${score}</text>
+  </svg>`;
+}
+
+function renderProfileModal(pid){
+  const p = playerById(pid);
+  if(!p) return '';
+  const stats = computeStats(pid);
+  const cr = currentRound();
+  const showComment = p.comment && p.commentRound===cr;
+  const form = formLast5(pid);
+  return `
+  <div class="modal-backdrop" onclick="if(event.target===this) closeProfile()">
+    <div class="modal glass">
+      <button class="modal-close" onclick="closeProfile()">✕</button>
+      <div class="profile-head">
+        ${avatarHTML(p,'player-avatar-lg')}
+        <div>
+          <div style="font-size:20px; font-weight:700;">${p.name}</div>
+          <div style="color:var(--text-dim); font-size:12.5px; margin-top:3px;">فورماسيون: ${p.formation}</div>
+          <div style="margin-top:6px; display:flex; gap:6px;">
+            ${form.map(r=>`<span style="width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;background:${r==='W'?'rgba(34,226,160,0.2)':(r==='D'?'rgba(255,185,46,0.2)':'rgba(255,68,99,0.2)')};color:${r==='W'?'var(--success)':(r==='D'?'var(--gold)':'var(--danger)')};">${r}</span>`).join('') || '<span style="font-size:12px;color:var(--text-dim);">مازال ما لعبش</span>'}
+          </div>
+        </div>
+      </div>
+
+      ${showComment? `<div class="comment-box">💬 "${p.comment}"</div>` : ''}
+
+      <div class="profile-stats-row">
+        <div class="pstat"><b>${stats.pts}</b><span>نقط</span></div>
+        <div class="pstat"><b>${stats.played}</b><span>لعب</span></div>
+        <div class="pstat"><b>${stats.w}-${stats.d}-${stats.l}</b><span>ف-ت-خ</span></div>
+        <div class="pstat"><b>${stats.gd>=0?'+':''}${stats.gd}</b><span>فارق الأهداف</span></div>
+        <div class="pstat"><b>${stats.avgPoss}%</b><span>متوسط الاستحواذ</span></div>
+      </div>
+
+      <div class="hamas-wrap">
+        ${renderHamasGauge(pid)}
+        <div><div style="font-weight:700;">مقياس الحماس 🔥</div><div style="font-size:12px; color:var(--text-dim);">مبني على آخر 5 مباريات + سلسلة الانتصارات</div></div>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="font-weight:700; margin-top:18px; margin-bottom:4px;">الخطة التكتيكية</div>
+        ${renderPitchSVG(p.formation)}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/* ---------- H2H ---------- */
+function renderH2HTab(){
+  if(h2hA===null) h2hA = players[0]?.id;
+  if(h2hB===null) h2hB = players[1]?.id;
+  const a = playerById(h2hA), b = playerById(h2hB);
+  const sa = computeStats(h2hA), sb = computeStats(h2hB);
+  const rec = h2hRecord(h2hA, h2hB);
+
+  function bar(label, va, vb, suffix=''){
+    const total = va+vb || 1;
+    const pa = Math.round((va/total)*100);
+    return `<div class="h2h-bar-row">
+      <div class="h2h-bar-label"><span>${va}${suffix}</span><span>${label}</span><span>${vb}${suffix}</span></div>
+      <div class="h2h-bar-track"><div class="h2h-bar-a" style="width:${pa}%"></div><div class="h2h-bar-b" style="width:${100-pa}%"></div></div>
+    </div>`;
+  }
+
+  return `
+  <div class="section-title dispf"><div class="bar"></div>مقارنة اللاعبين Head-to-Head</div>
+  <div class="h2h-selects">
+    <select onchange="h2hA=parseInt(this.value); render()">${players.map(p=>`<option value="${p.id}" ${p.id===h2hA?'selected':''}>${p.name}</option>`).join('')}</select>
+    <div class="h2h-vs dispf">VS</div>
+    <select onchange="h2hB=parseInt(this.value); render()">${players.map(p=>`<option value="${p.id}" ${p.id===h2hB?'selected':''}>${p.name}</option>`).join('')}</select>
+  </div>
+  <div class="glass pad">
+    <div style="display:flex; justify-content:space-around; text-align:center; margin-bottom:22px;">
+      <div>${avatarHTML(a,'player-avatar-lg')}<div style="font-weight:700; margin-top:6px;">${a.name}</div></div>
+      <div style="align-self:center;">
+        <div class="dispf" style="font-size:26px; font-weight:800;">${rec.aw} - ${rec.dr} - ${rec.bw}</div>
+        <div style="font-size:11px; color:var(--text-dim);">فوز - تعادل - فوز</div>
+      </div>
+      <div>${avatarHTML(b,'player-avatar-lg')}<div style="font-weight:700; margin-top:6px;">${b.name}</div></div>
+    </div>
+    ${bar('النقط', sa.pts, sb.pts)}
+    ${bar('عدد الأهداف', sa.gf, sb.gf)}
+    ${bar('فارق الأهداف', sa.gd, sb.gd)}
+    ${bar('متوسط الاستحواذ', sa.avgPoss, sb.avgPoss, '%')}
+    ${bar('الانتصارات', sa.w, sb.w)}
+  </div>
+  `;
+}
+
+/* ---------- Admin ---------- */
+function renderAdminTab(){
+  if(!isAdmin){
+    return `
+    <div class="login-box glass">
+      <div style="font-size:34px;">🔐</div>
+      <div style="font-weight:700; font-size:18px; margin-top:8px;">دخول المسؤول</div>
+      <input type="password" id="adminPass" placeholder="كلمة السر">
+      <button class="small-btn" style="width:100%; padding:11px;" onclick="tryLogin()">دخول</button>
+      <div id="loginErr" style="color:var(--danger); font-size:12px; margin-top:8px;"></div>
+    </div>`;
+  }
+  const subtabs = [['matches','إدخال النتائج'],['players','إدارة اللاعبين'],['sanctions','العقوبات']];
+  return `
+  <div class="section-title dispf"><div class="bar"></div>لوحة تحكم المسؤول</div>
+  <div class="admin-tabs">
+    ${subtabs.map(([k,l])=>`<button class="admin-subtab ${activeAdminSub===k?'active':''}" onclick="setAdminSub('${k}')">${l}</button>`).join('')}
+    <button class="admin-subtab" style="margin-inline-start:auto; border-color:rgba(255,68,99,0.3); color:var(--danger);" onclick="logoutAdmin()">خروج</button>
+  </div>
+  ${activeAdminSub==='matches'? renderFixturesTab() : ''}
+  ${activeAdminSub==='players'? renderAdminPlayers() : ''}
+  ${activeAdminSub==='sanctions'? renderAdminSanctions() : ''}
+  `;
+}
+
+function renderAdminPlayers(){
+  return `
+  <div class="glass pad">
+    ${players.map(p=>`
+      <div class="player-edit-row">
+        ${avatarHTML(p)}
+        <input type="text" value="${p.name}" onchange="updatePlayerField(${p.id},'name',this.value)">
+        <select onchange="updatePlayerField(${p.id},'formation',this.value)" style="padding:8px; border-radius:7px; background:var(--bg-2); border:1px solid var(--border); color:var(--text);">
+          ${['4-3-3','4-4-2','3-5-2','5-3-2','4-2-3-1','3-4-3'].map(f=>`<option ${p.formation===f?'selected':''}>${f}</option>`).join('')}
+        </select>
+        <input type="text" placeholder="رابط الصورة (اختياري)" value="${p.photo||''}" onchange="updatePlayerField(${p.id},'photo',this.value)" style="max-width:170px;">
+        <div class="color-dot" style="background:${p.color}" onclick="cyclePlayerColor(${p.id})" title="غيّر اللون"></div>
+        <button class="small-btn ${p.banned?'danger':''}" onclick="togglePlayerBan(${p.id})">${p.banned?'رفع الإيقاف':'إيقاف'}</button>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function renderAdminSanctions(){
+  return `
+  <div class="glass pad" style="max-width:520px;">
+    <div class="form-row">
+      <label>اللاعب</label>
+      <select id="sanc_player">${players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select>
+    </div>
+    <div class="form-row">
+      <label>نوع العقوبة</label>
+      <select id="sanc_type">
+        <option value="deduct">خصم نقط</option>
+        <option value="ban">إيقاف / منع</option>
+        <option value="note">تنبيه / إعلان</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>عدد النقط المخصومة (فقط فـ حالة الخصم)</label>
+      <input type="number" id="sanc_points" min="0" value="1">
+    </div>
+    <div class="form-row">
+      <label>الوصف</label>
+      <textarea id="sanc_desc" placeholder="سبب العقوبة..."></textarea>
+    </div>
+    <button class="small-btn" style="padding:10px 22px;" onclick="issueSanction()">نشر العقوبة</button>
+  </div>
+  <div class="section-title dispf" style="margin-top:26px;"><div class="bar"></div>سجل العقوبات</div>
+  <div class="glass">
+    ${sanctions.slice().reverse().map((s,idx)=>{
+      const pl = playerById(s.playerId);
+      const realIdx = sanctions.length-1-idx;
+      return `<div class="feed-item">
+        <span class="feed-tag ${s.type==='ban'?'ban':(s.type==='deduct'?'deduct':'note')}">${s.type==='ban'?'إيقاف':(s.type==='deduct'?'خصم':'تنبيه')}</span>
+        <div class="feed-text" style="flex:1;"><b>${pl?pl.name:'?'}</b> — ${s.description}${s.type==='deduct'?` (−${s.points})`:''}</div>
+        <button class="small-btn danger" onclick="removeSanction(${realIdx})">حذف</button>
+      </div>`;
+    }).join('') || `<div class="empty-state">ماكاين حتى عقوبة</div>`}
+  </div>
+  `;
+}
+
+/* ============================= ACTIONS ============================= */
+function setTab(t){ activeTab=t; clickSound(); render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setRound(r){ activeRound=r; clickSound(); render(); }
+function setAdminSub(s){ activeAdminSub=s; render(); }
+function toggleSound(){ settings.sound=!settings.sound; storSet('ef2027_settings', settings); render(); if(settings.sound) beep(500,700,0.15); }
+function openProfile(id){ openProfileId=id; render(); }
+function closeProfile(){ openProfileId=null; render(); }
+
+function tryLogin(){
+  const val = document.getElementById('adminPass').value;
+  if(val===ADMIN_PASSWORD){ isAdmin=true; render(); }
+  else{ document.getElementById('loginErr').textContent='كلمة السر غالطة'; }
+}
+function logoutAdmin(){ isAdmin=false; render(); }
+
+async function submitMatch(matchId){
+  const m = matches.find(x=>x.id===matchId);
+  const hs = parseInt(document.getElementById('hs_'+matchId).value);
+  const as = parseInt(document.getElementById('as_'+matchId).value);
+  const hp = parseInt(document.getElementById('hp_'+matchId).value);
+  const ap = parseInt(document.getElementById('ap_'+matchId).value);
+  if(isNaN(hs)||isNaN(as)){ alert('دخل النتيجة كاملة'); return; }
+  m.homeScore=hs; m.awayScore=as;
+  m.homePoss = isNaN(hp)? (isNaN(ap)?50:100-ap) : hp;
+  m.awayPoss = isNaN(ap)? (100-m.homePoss) : ap;
+  m.played=true;
+  await storSet('ef2027_matches', matches);
+  if(hs>0||as>0) goalSound();
+  render();
+}
+
+async function updatePlayerField(pid, field, value){
+  const p = players.find(x=>x.id===pid);
+  p[field]=value;
+  await storSet('ef2027_players', players);
+  render();
+}
+async function cyclePlayerColor(pid){
+  const p = players.find(x=>x.id===pid);
+  let idx = AVATAR_COLORS.indexOf(p.color);
+  p.color = AVATAR_COLORS[(idx+1)%AVATAR_COLORS.length];
+  await storSet('ef2027_players', players);
+  render();
+}
+async function togglePlayerBan(pid){
+  const p = players.find(x=>x.id===pid);
+  p.banned=!p.banned;
+  await storSet('ef2027_players', players);
+  render();
+}
+
+async function issueSanction(){
+  const playerId = parseInt(document.getElementById('sanc_player').value);
+  const type = document.getElementById('sanc_type').value;
+  const points = parseInt(document.getElementById('sanc_points').value)||0;
+  const description = document.getElementById('sanc_desc').value.trim();
+  if(!description){ alert('كتب الوصف من فضلك'); return; }
+  sanctions.push({playerId, type, points, description, ts:Date.now()});
+  if(type==='ban'){ const p=players.find(x=>x.id===playerId); p.banned=true; await storSet('ef2027_players', players); }
+  await storSet('ef2027_sanctions', sanctions);
+  render();
+}
+async function removeSanction(idx){
+  sanctions.splice(idx,1);
+  await storSet('ef2027_sanctions', sanctions);
+  render();
+}
+
+/* ============================= BOOT ============================= */
+async function boot(){
+  document.getElementById('app').innerHTML = `<div style="padding:80px; text-align:center; color:var(--text-dim);">جاري التحميل...</div>`;
+  await loadAll();
+  render();
+}
+boot();
+</script>
+</body>
+</html>
