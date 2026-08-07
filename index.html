@@ -380,6 +380,60 @@ function computeStats(pid){
   pts -= sanctionDeductionFor(pid);
   return {played:pm.length, w,d,l,gf,ga,gd:gf-ga, possSum, pts, avgPoss: pm.length? Math.round(possSum/pm.length):0};
 }
+function computeAdvancedStats(pid){
+  const base = computeStats(pid);
+  const pmChrono = playedMatchesFor(pid).slice().sort((a,b)=>a.round-b.round);
+
+  const winRate = base.played? Math.round(base.w/base.played*100) : 0;
+  const ppm = base.played? (base.pts/base.played).toFixed(2) : '0.00';
+
+  let biggestWin=null, biggestLoss=null, cleanSheets=0;
+  let curWinStreak=0, maxWinStreak=0, curLossStreak=0, maxLossStreak=0;
+
+  pmChrono.forEach(m=>{
+    const isHome = m.home===pid;
+    const gfor = isHome? m.homeScore : m.awayScore;
+    const gag = isHome? m.awayScore : m.homeScore;
+    const oppId = isHome? m.away : m.home;
+    const diff = gfor-gag;
+
+    if(gag===0) cleanSheets++;
+
+    if(gfor>gag){
+      curWinStreak++; curLossStreak=0;
+      if(curWinStreak>maxWinStreak) maxWinStreak=curWinStreak;
+      if(!biggestWin || diff>biggestWin.diff) biggestWin = {diff, gfor, gag, oppId, round:m.round};
+    } else if(gfor<gag){
+      curLossStreak++; curWinStreak=0;
+      if(curLossStreak>maxLossStreak) maxLossStreak=curLossStreak;
+      if(!biggestLoss || diff<biggestLoss.diff) biggestLoss = {diff, gfor, gag, oppId, round:m.round};
+    } else {
+      curWinStreak=0; curLossStreak=0;
+    }
+  });
+
+  const maxRound = pmChrono.length? pmChrono[pmChrono.length-1].round : 0;
+  let top3Count=0, leaderCount=0;
+  for(let r=1;r<=maxRound;r++){
+    const table = standingsAsOf(r);
+    const entry = table.find(x=>x.id===pid);
+    if(entry){
+      if(entry.rank<=3) top3Count++;
+      if(entry.rank===1) leaderCount++;
+    }
+  }
+
+  const last5 = pmChrono.slice(-5).reverse().map(m=>{
+    const isHome = m.home===pid;
+    const gfor = isHome? m.homeScore : m.awayScore;
+    const gag = isHome? m.awayScore : m.homeScore;
+    const oppId = isHome? m.away : m.home;
+    const result = gfor>gag?'W':(gfor===gag?'D':'L');
+    return {oppId, gfor, gag, round:m.round, result};
+  });
+
+  return {...base, winRate, ppm, biggestWin, biggestLoss, cleanSheets, maxWinStreak, maxLossStreak, top3Count, leaderCount, last5};
+}
 
 function computeStandings(){
   let table = players.map(p=>({...p, stats:computeStats(p.id)}));
@@ -871,7 +925,7 @@ function renderHamasGauge(pid){
 function renderProfileModal(pid){
   const p = playerById(pid);
   if(!p) return '';
-  const stats = computeStats(pid);
+  const stats = computeAdvancedStats(pid);
   const cr = currentRound();
   const showComment = p.comment && p.commentRound===cr;
   const form = formLast5(pid);
@@ -898,6 +952,33 @@ function renderProfileModal(pid){
         <div class="pstat"><b>${stats.w}-${stats.d}-${stats.l}</b><span>ف-ت-خ</span></div>
         <div class="pstat"><b>${stats.gd>=0?'+':''}${stats.gd}</b><span>فارق الأهداف</span></div>
         <div class="pstat"><b>${stats.avgPoss}%</b><span>متوسط الاستحواذ</span></div>
+      </div>
+<div style="margin-top:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+        <div class="pstat"><b>${stats.winRate}%</b><span>Win Rate</span></div>
+        <div class="pstat"><b>${stats.ppm}</b><span>نقطة/مباراة</span></div>
+        <div class="pstat"><b>${stats.cleanSheets}</b><span>Clean Sheets</span></div>
+        <div class="pstat"><b>${stats.maxWinStreak}</b><span>أطول سلسلة فوز</span></div>
+        <div class="pstat"><b>${stats.maxLossStreak}</b><span>أطول سلسلة خسارة</span></div>
+        <div class="pstat"><b>${stats.leaderCount}</b><span>مرات التصدر</span></div>
+        <div class="pstat"><b>${stats.top3Count}</b><span>مرات Top 3</span></div>
+        <div class="pstat"><b>${stats.biggestWin? stats.biggestWin.gfor+'-'+stats.biggestWin.gag : '—'}</b><span>أكبر فوز</span></div>
+        <div class="pstat"><b>${stats.biggestLoss? stats.biggestLoss.gfor+'-'+stats.biggestLoss.gag : '—'}</b><span>أكبر خسارة</span></div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div style="font-weight:700; margin-bottom:8px;">آخر 5 مباريات</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${stats.last5.length===0 ? `<span style="font-size:12px;color:var(--text-dim);">مازال ما لعبش</span>` :
+            stats.last5.map(m=>{
+              const opp = playerById(m.oppId);
+              const color = m.result==='W'? 'var(--success)' : (m.result==='D'? 'var(--gold)' : 'var(--danger)');
+              return `<div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:12.5px;">
+                <span>جولة ${m.round} — ضد ${opp? opp.name : '—'}</span>
+                <span style="font-weight:700; color:${color};">${m.gfor}-${m.gag}</span>
+              </div>`;
+            }).join('')
+          }
+        </div>
       </div>
 
       <div class="hamas-wrap">
