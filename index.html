@@ -294,10 +294,10 @@ function defaultPlayers(){
     formation:"4-3-3",
     comment:"",
     commentRound:0,
-    banned:false
+    banned:false,
+    badges:[]
   }));
 }
-
 function generateFixtures(n){
   let ids = Array.from({length:n}, (_,i)=>i);
   let rounds = [];
@@ -454,7 +454,121 @@ function computeMVP(round){
   return best;
 }
 
-function h2hRecord(a,b){
+/* ============================= BADGES ============================= */
+const BADGE_DEFS = {
+  round_champion:   {icon:'🏆', label:'Round Champion'},
+  goal_machine:     {icon:'⚽', label:'Goal Machine'},
+  iron_wall:        {icon:'🛡', label:'Iron Wall'},
+  unstoppable:      {icon:'🔥', label:'Unstoppable'},
+  perfect_accuracy: {icon:'🎯', label:'Perfect Accuracy'},
+  mvp:              {icon:'💎', label:'MVP'},
+  rising_star:      {icon:'🚀', label:'Rising Star'},
+};
+
+function computeStatsAsOf(pid, uptoRound){
+  const pm = matches.filter(m=>m.played && m.round<=uptoRound && (m.home===pid || m.away===pid));
+  let pts=0, gf=0, ga=0;
+  pm.forEach(m=>{
+    const isHome = m.home===pid;
+    const gfor = isHome? m.homeScore : m.awayScore;
+    const gag = isHome? m.awayScore : m.homeScore;
+    gf+=gfor; ga+=gag;
+    if(gfor>gag) pts+=3; else if(gfor===gag) pts+=1;
+  });
+  return {pts, gd:gf-ga};
+}
+
+function standingsAsOf(uptoRound){
+  let table = players.map(p=>({id:p.id, stats:computeStatsAsOf(p.id, uptoRound)}));
+  table.sort((a,b)=>{
+    if(b.stats.pts!==a.stats.pts) return b.stats.pts-a.stats.pts;
+    return b.stats.gd-a.stats.gd;
+  });
+  table.forEach((p,i)=>{ p.rank=i+1; });
+  return table;
+}
+
+async function computeAndAwardRoundBadges(round){
+  const rm = matches.filter(m=>m.round===round && m.played);
+  if(!rm.length) return;
+  const alreadyAwarded = players.some(p=>(p.badges||[]).some(b=>b.round===round));
+  if(alreadyAwarded) return;
+
+  const roundStats = {};
+  rm.forEach(m=>{
+    [['home','away'],['away','home']].forEach(([side])=>{
+      const pid = m[side];
+      if(!roundStats[pid]) roundStats[pid] = {gf:0, ga:0, pts:0};
+      const gf = side==='home'? m.homeScore : m.awayScore;
+      const ga = side==='home'? m.awayScore : m.homeScore;
+      roundStats[pid].gf += gf;
+      roundStats[pid].ga += ga;
+      if(gf>ga) roundStats[pid].pts+=3; else if(gf===ga) roundStats[pid].pts+=1;
+    });
+  });
+
+  const pids = Object.keys(roundStats).map(Number);
+  const awards = [];
+
+  let champion = null;
+  pids.forEach(pid=>{
+    const s = roundStats[pid]; const gd = s.gf-s.ga;
+    if(!champion || s.pts>champion.pts || (s.pts===champion.pts && gd>champion.gd)) champion = {pid, pts:s.pts, gd};
+  });
+  if(champion) awards.push({pid:champion.pid, code:'round_champion'});
+
+  let goalMachine = null;
+  pids.forEach(pid=>{ if(!goalMachine || roundStats[pid].gf>roundStats[goalMachine].gf) goalMachine = pid; });
+  if(goalMachine!==null && roundStats[goalMachine].gf>0) awards.push({pid:goalMachine, code:'goal_machine'});
+
+  let ironWall = null;
+  pids.forEach(pid=>{ if(!ironWall || roundStats[pid].ga<roundStats[ironWall].ga) ironWall = pid; });
+  if(ironWall!==null) awards.push({pid:ironWall, code:'iron_wall'});
+
+  pids.forEach(pid=>{
+    const pm = matches.filter(m=>m.played && m.round<=round && (m.home===pid||m.away===pid)).sort((a,b)=>a.round-b.round);
+    const last3 = pm.slice(-3);
+    if(last3.length===3 && last3.every(m=>{
+      const isHome = m.home===pid;
+      const gf = isHome?m.homeScore:m.awayScore, ga = isHome?m.awayScore:m.homeScore;
+      return gf>ga;
+    })){
+      awards.push({pid, code:'unstoppable'});
+    }
+  });
+
+  pids.forEach(pid=>{
+    const s = roundStats[pid];
+    if(s.ga===0 && s.gf>0) awards.push({pid, code:'perfect_accuracy'});
+  });
+
+  const mvpPid = computeMVP(round);
+  if(mvpPid!==null) awards.push({pid:mvpPid, code:'mvp'});
+
+  if(round>1){
+    const prev = standingsAsOf(round-1);
+    const curr = standingsAsOf(round);
+    let best=null;
+    curr.forEach(c=>{
+      const p = prev.find(x=>x.id===c.id);
+      if(p){
+        const jump = p.rank - c.rank;
+        if(jump>0 && (!best || jump>best.jump)) best = {pid:c.id, jump};
+      }
+    });
+    if(best) awards.push({pid:best.pid, code:'rising_star'});
+  }
+
+  const ts = Date.now();
+  awards.forEach(a=>{
+    const p = players.find(x=>x.id===a.pid);
+    if(!p) return;
+    if(!p.badges) p.badges = [];
+    p.badges.push({code:a.code, round, ts});
+  });
+
+  await storSet('ef2027_players', players);
+}function h2hRecord(a,b){
   const rec = matches.filter(m=>m.played && ((m.home===a&&m.away===b)||(m.home===b&&m.away===a)));
   let aw=0,bw=0,dr=0;
   rec.forEach(m=>{
@@ -790,6 +904,20 @@ function renderProfileModal(pid){
         ${renderHamasGauge(pid)}
         <div><div style="font-weight:700;">مقياس الحماس 🔥</div><div style="font-size:12px; color:var(--text-dim);">مبني على آخر 5 مباريات + سلسلة الانتصارات</div></div>
       </div>
+<div style="margin-top:18px;">
+        <div style="font-weight:700; margin-bottom:8px;">🏅 الأوسمة (${(p.badges||[]).length})</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${(p.badges||[]).length===0 ? `<span style="font-size:12px;color:var(--text-dim);">ما زال بلا أوسمة</span>` :
+            [...(p.badges||[])].sort((a,b)=>b.round-a.round).map(b=>{
+              const def = BADGE_DEFS[b.code] || {icon:'🎖', label:b.code};
+              return `<div title="${def.label} — جولة ${b.round}" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:56px;">
+                <span style="font-size:20px;">${def.icon}</span>
+                <span style="font-size:9px;color:var(--text-dim);">ج${b.round}</span>
+              </div>`;
+            }).join('')
+          }
+        </div>
+      </div>
 
       <div style="text-align:center;">
         <div style="font-weight:700; margin-top:18px; margin-bottom:4px;">الخطة التكتيكية</div>
@@ -952,6 +1080,10 @@ async function submitMatch(matchId){
   m.awayPoss = isNaN(ap)? (100-m.homePoss) : ap;
   m.played=true;
   await storSet('ef2027_matches', matches);
+  const roundMatches = matches.filter(x=>x.round===m.round);
+  if(roundMatches.every(x=>x.played)){
+    await computeAndAwardRoundBadges(m.round);
+  }
   if(hs>0||as>0) goalSound();
   render();
 }
