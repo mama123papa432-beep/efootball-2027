@@ -282,6 +282,7 @@ let activeRound = 1;
 let activeAdminSub = "matches";
 let openProfileId = null;
 let h2hA = null, h2hB = null;
+let roundDates = {};
 
 function initials(name){ return name.slice(0,2).toUpperCase(); }
 
@@ -355,6 +356,7 @@ async function loadAll(){
   matches = await storGet('ef2027_matches', defaultMatches());
   sanctions = await storGet('ef2027_sanctions', []);
   settings = await storGet('ef2027_settings', {sound:false});
+  roundDates = await storGet('ef2027_rounds', {});
 }
 
 /* ============================= LOGIC ============================= */
@@ -485,6 +487,58 @@ function currentRound(){
   return 15;
 }
 
+function getCountdownTarget(){
+  const cr = currentRound();
+  const rd = roundDates[cr];
+  if(!rd) return null;
+  const now = Date.now();
+  if(rd.start){
+    const startTime = new Date(rd.start).getTime();
+    if(now < startTime){
+      return {label:'الجولة القادمة تبدأ في', target:startTime, round:cr};
+    }
+  }
+  if(rd.end){
+    const endTime = new Date(rd.end).getTime();
+    if(now < endTime){
+      return {label:'الجولة الحالية تنتهي في', target:endTime, round:cr};
+    } else {
+      return {label:'الجولة انتهت', target:null, round:cr};
+    }
+  }
+  return null;
+}
+
+function formatCountdown(ms){
+  if(ms<=0) return '00:00:00';
+  const totalSec = Math.floor(ms/1000);
+  const days = Math.floor(totalSec/86400);
+  const hours = Math.floor((totalSec%86400)/3600);
+  const mins = Math.floor((totalSec%3600)/60);
+  const secs = totalSec%60;
+  let out = '';
+  if(days>0) out += days+' يوم ';
+  out += String(hours).padStart(2,'0')+':'+String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+  return out;
+}
+
+function renderCountdownWidget(){
+  const info = getCountdownTarget();
+  if(!info) return '';
+  return `<div id="countdownBox" style="margin-top:14px; background:rgba(0,229,255,0.08); border:1px solid var(--border); border-radius:12px; padding:12px 16px; text-align:center;">
+    <div style="font-size:12px; color:var(--text-dim); margin-bottom:4px;">${info.label} — جولة ${info.round}</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--cyan);">${info.target? formatCountdown(info.target-Date.now()) : '—'}</div>
+  </div>`;
+}
+
+function tickCountdown(){
+  const el = document.getElementById('countdownBox');
+  if(!el) return;
+  const info = getCountdownTarget();
+  if(!info || !info.target) return;
+  const valEl = el.querySelector('div:last-child');
+  if(valEl) valEl.textContent = formatCountdown(info.target-Date.now());
+}
 function lastCompletedRound(){
   for(let r=15;r>=1;r--){
     const rm = matches.filter(m=>m.round===r);
@@ -732,6 +786,7 @@ function renderDashboard(){
       <div class="hstat"><b>${cr}</b><span>الجولة الحالية</span></div>
       <div class="hstat"><b>${sanctions.length}</b><span>عقوبات صادرة</span></div>
     </div>
+    ${renderCountdownWidget()}
     <div class="podium">
       ${top3.map((p,i)=>{
         const g = i===0?'g1':(i===1?'g2':'g3');
@@ -1063,7 +1118,7 @@ function renderAdminTab(){
       <div id="loginErr" style="color:var(--danger); font-size:12px; margin-top:8px;"></div>
     </div>`;
   }
-  const subtabs = [['matches','إدخال النتائج'],['players','إدارة اللاعبين'],['sanctions','العقوبات']];
+  const subtabs = [['matches','إدخال النتائج'],['players','إدارة اللاعبين'],['sanctions','العقوبات'],['rounds','الجولات والمواعيد']];
   return `
   <div class="section-title dispf"><div class="bar"></div>لوحة تحكم المسؤول</div>
   <div class="admin-tabs">
@@ -1073,7 +1128,35 @@ function renderAdminTab(){
   ${activeAdminSub==='matches'? renderFixturesTab() : ''}
   ${activeAdminSub==='players'? renderAdminPlayers() : ''}
   ${activeAdminSub==='sanctions'? renderAdminSanctions() : ''}
+  ${activeAdminSub==='rounds'? renderAdminRounds() : ''}
   `;
+}
+
+function renderAdminRounds(){
+  const roundsArr = Array.from({length:15},(_,i)=>i+1);
+  return `
+  <div class="glass pad">
+    <div style="font-weight:700; margin-bottom:10px;">تحديد مواعيد كل جولة</div>
+    ${roundsArr.map(r=>{
+      const rd = roundDates[r] || {};
+      return `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span style="min-width:70px; font-weight:700;">جولة ${r}</span>
+        <label style="font-size:11px; color:var(--text-dim);">بداية:
+          <input type="datetime-local" value="${rd.start||''}" onchange="updateRoundDate(${r},'start',this.value)" style="background:var(--bg-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:5px;">
+        </label>
+        <label style="font-size:11px; color:var(--text-dim);">نهاية:
+          <input type="datetime-local" value="${rd.end||''}" onchange="updateRoundDate(${r},'end',this.value)" style="background:var(--bg-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:5px;">
+        </label>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function updateRoundDate(round, field, value){
+  if(!roundDates[round]) roundDates[round] = {};
+  roundDates[round][field] = value;
+  await storSet('ef2027_rounds', roundDates);
+  render();
 }
 
 function renderAdminPlayers(){
@@ -1216,6 +1299,7 @@ async function boot(){
   render();
 }
 boot();
+setInterval(tickCountdown, 1000);
 </script>
 </body>
 </html>
