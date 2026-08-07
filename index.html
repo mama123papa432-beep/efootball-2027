@@ -260,6 +260,8 @@ tr.row-relegated{background:linear-gradient(90deg, rgba(255,68,99,0.08), transpa
   window.__firestoreSet = async (key, val) => {
     await setDoc(doc(db, 'efootball2027', key), { value: val });
   };
+window.__firebaseReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
 </script>
 </head>
 <body>
@@ -994,6 +996,9 @@ async function removeSanction(idx){
 /* ============================= BOOT ============================= */
 async function boot(){
   document.getElementById('app').innerHTML = `<div style="padding:80px; text-align:center; color:var(--text-dim);">جاري التحميل...</div>`;
+  if(!window.__firebaseReady){
+    await new Promise(resolve => window.addEventListener('firebase-ready', resolve, {once:true}));
+  }
   await loadAll();
   render();
 }
