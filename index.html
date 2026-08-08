@@ -289,6 +289,21 @@ const ADMIN_PASSWORD = "efootball2027";
 const CLOUDINARY_CLOUD_NAME = "e3lunqdx";
 const CLOUDINARY_UPLOAD_PRESET = "efootball_unsigned";
 
+const MATCH_STATS = [
+  {key:'shots', label:'التسديدات'},
+  {key:'sot', label:'تسديدات على المرمى'},
+  {key:'fouls', label:'الأخطاء'},
+  {key:'offsides', label:'التسلل'},
+  {key:'corners', label:'الركلات الركنية'},
+  {key:'fk', label:'الركلات الحرة'},
+  {key:'passes', label:'التمريرات'},
+  {key:'passOk', label:'التمريرات الناجحة'},
+  {key:'crosses', label:'العرضيات'},
+  {key:'interceptions', label:'الاعتراضات'},
+  {key:'tackles', label:'التدخلات'},
+  {key:'saves', label:'التصديات'}
+];
+
 let players = [];
 let matches = [];
 let sanctions = [];
@@ -348,6 +363,7 @@ function defaultMatches(){
         awayScore:null,
         homePoss:null,
         awayPoss:null,
+        stats:{home:{}, away:{}},
         played:false
       });
     });
@@ -400,6 +416,24 @@ function computeStats(pid){
   pts -= sanctionDeductionFor(pid);
   return {played:pm.length, w,d,l,gf,ga,gd:gf-ga, possSum, pts, avgPoss: pm.length? Math.round(possSum/pm.length):0};
 }
+function computeMatchRatios(pid){
+  const pm = playedMatchesFor(pid);
+  let shots=0, sot=0, passes=0, passOk=0;
+  pm.forEach(m=>{
+    const isHome = m.home===pid;
+    const side = isHome? (m.stats&&m.stats.home) : (m.stats&&m.stats.away);
+    if(!side) return;
+    shots += side.shots||0;
+    sot += side.sot||0;
+    passes += side.passes||0;
+    passOk += side.passOk||0;
+  });
+  return {
+    shotAccuracy: shots? Math.round(sot/shots*100) : 0,
+    passAccuracy: passes? Math.round(passOk/passes*100) : 0
+  };
+}
+function computeAdvancedStats(pid){
 function computeAdvancedStats(pid){
   const base = computeStats(pid);
   const pmChrono = playedMatchesFor(pid).slice().sort((a,b)=>a.round-b.round);
@@ -948,12 +982,24 @@ function renderFixturesTab(){
             <span class="dash">-</span>
             <input type="number" min="0" id="as_${m.id}" placeholder="${m.played?m.awayScore:'0'}">
           </div>
-          <div class="match-input-row">
-            <input type="number" min="0" max="100" id="hp_${m.id}" placeholder="${m.played?m.homePoss:'استح%'}">
-            <span class="dash">-</span>
-            <input type="number" min="0" max="100" id="ap_${m.id}" placeholder="${m.played?m.awayPoss:'استح%'}">
-          </div>
-          <div class="match-input-row"><button class="small-btn" onclick="submitMatch(${m.id})">${m.played?'تعديل':'حفظ النتيجة'}</button></div>
+         <div class="match-input-row">
+  <input type="number" min="0" max="100" id="hp_${m.id}" placeholder="${m.played?m.homePoss:'استح%'}">
+  <span class="dash">-</span>
+  <input type="number" min="0" max="100" id="ap_${m.id}" placeholder="${m.played?m.awayPoss:'استح%'}">
+</div>
+<div class="match-input-row" style="flex-wrap:wrap; gap:10px;">
+  ${MATCH_STATS.map(s=>`
+    <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+      <span style="font-size:9px;color:var(--text-dim);">${s.label}</span>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <input type="number" min="0" id="sth_${s.key}_${m.id}" placeholder="${(m.stats&&m.stats.home&&m.stats.home[s.key]!=null)?m.stats.home[s.key]:'0'}" style="width:38px;">
+        <span class="dash" style="font-size:11px;">-</span>
+        <input type="number" min="0" id="sta_${s.key}_${m.id}" placeholder="${(m.stats&&m.stats.away&&m.stats.away[s.key]!=null)?m.stats.away[s.key]:'0'}" style="width:38px;">
+      </div>
+    </div>
+  `).join('')}
+</div>
+<div class="match-input-row"><button class="small-btn" onclick="submitMatch(${m.id})">${m.played?'تعديل':'حفظ النتيجة'}</button></div>
         `:''}
       </div>`;
     }).join('')}
@@ -1028,6 +1074,7 @@ function renderProfileModal(pid){
   const p = playerById(pid);
   if(!p) return '';
   const stats = computeAdvancedStats(pid);
+  const ratios = computeMatchRatios(pid);
   const cr = currentRound();
   const showComment = p.comment && p.commentRound===cr;
   const form = formLast5(pid);
@@ -1054,7 +1101,9 @@ function renderProfileModal(pid){
         <div class="pstat"><b>${stats.w}-${stats.d}-${stats.l}</b><span>ف-ت-خ</span></div>
         <div class="pstat"><b>${stats.gd>=0?'+':''}${stats.gd}</b><span>فارق الأهداف</span></div>
         <div class="pstat"><b>${stats.avgPoss}%</b><span>متوسط الاستحواذ</span></div>
-      </div>
+        <div class="pstat"><b>${ratios.passAccuracy}%</b><span>دقة التمرير</span></div>
+        <div class="pstat"><b>${ratios.shotAccuracy}%</b><span>دقة التسديد</span></div>
+        </div>
 <div style="margin-top:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
         <div class="pstat"><b>${stats.winRate}%</b><span>Win Rate</span></div>
         <div class="pstat"><b>${stats.ppm}</b><span>نقطة/مباراة</span></div>
@@ -1297,9 +1346,16 @@ async function submitMatch(matchId){
   const ap = parseInt(document.getElementById('ap_'+matchId).value);
   if(isNaN(hs)||isNaN(as)){ alert('دخل النتيجة كاملة'); return; }
   m.homeScore=hs; m.awayScore=as;
-  m.homePoss = isNaN(hp)? (isNaN(ap)?50:100-ap) : hp;
-  m.awayPoss = isNaN(ap)? (100-m.homePoss) : ap;
-  m.played=true;
+ m.homePoss = isNaN(hp)? (isNaN(ap)?50:100-ap) : hp;
+ m.awayPoss = isNaN(ap)? (100-m.homePoss) : ap;
+ if(!m.stats) m.stats = {home:{}, away:{}};
+ MATCH_STATS.forEach(s=>{
+  const hv = parseInt(document.getElementById('sth_'+s.key+'_'+matchId).value);
+  const av = parseInt(document.getElementById('sta_'+s.key+'_'+matchId).value);
+  m.stats.home[s.key] = isNaN(hv)? (m.stats.home[s.key]||0) : hv;
+  m.stats.away[s.key] = isNaN(av)? (m.stats.away[s.key]||0) : av;
+});
+m.played=true;
   await storSet('ef2027_matches', matches);
   const roundMatches = matches.filter(x=>x.round===m.round);
   if(roundMatches.every(x=>x.played)){
