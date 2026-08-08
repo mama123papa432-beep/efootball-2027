@@ -1082,7 +1082,9 @@ function renderProfileModal(pid){
     <div class="modal glass">
       <button class="modal-close" onclick="closeProfile()">✕</button>
       <div class="profile-head">
-        ${avatarHTML(p,'player-avatar-lg')}
+        ${p.videoUrl ? 
+  `<video src="${p.videoUrl}" autoplay muted loop playsinline style="width:100%; max-width:220px; border-radius:16px; margin:0 auto; display:block; border:2px solid var(--border);"></video>` 
+  : avatarHTML(p,'player-avatar-lg')}
         <div>
           <div style="font-size:20px; font-weight:700;">${p.name}</div>
           <div style="color:var(--text-dim); font-size:12.5px; margin-top:3px;">فورماسيون: ${p.formation}</div>
@@ -1275,7 +1277,8 @@ function renderAdminPlayers(){
   ${p.formationPhoto? `<img src="${p.formationPhoto}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:17px;">📋</span>`}
   <input type="file" id="kitFile_${p.id}" accept="image/*" style="display:none" onchange="uploadPlayerPhoto(${p.id},'formationPhoto',this.files[0])">
 </div>
-        <div class="color-dot" style="background:${p.color}" onclick="cyclePlayerColor(${p.id})" title="غيّر اللون"></div>
+      <input type="text" value="${p.videoUrl||''}" placeholder="رابط فيديو الشخصية (اختياري)" onchange="updatePlayerField(${p.id},'videoUrl',this.value)" style="width:180px; font-size:11px; padding:6px; border-radius:7px; background:var(--bg-2); border:1px solid var(--border); color:var(--text);">  
+      <div class="color-dot" style="background:${p.color}" onclick="cyclePlayerColor(${p.id})" title="غيّر اللون"></div>
         <button class="small-btn ${p.banned?'danger':''}" onclick="togglePlayerBan(${p.id})">${p.banned?'رفع الإيقاف':'إيقاف'}</button>
       </div>
     `).join('')}
